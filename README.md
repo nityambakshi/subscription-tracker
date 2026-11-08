@@ -1,4 +1,4 @@
-        # Recur — Subscription Tracker
+# Recur — Subscription Tracker
 
 Recur is a backend API for tracking recurring subscriptions. It helps you see **when each subscription renews**, how much you pay **monthly (and overall)**, and stay ahead of upcoming charges.
 

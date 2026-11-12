@@ -1,4 +1,4 @@
-package com.Recur.subscription_tracker.enum;
+package com.Recur.subscription_tracker.enums;
 
 public enum BillingCycle {
     MONTHLY,

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.Recur.subscription_tracker.enum.BillingCycle;
+import com.Recur.subscription_tracker.enums.BillingCycle;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

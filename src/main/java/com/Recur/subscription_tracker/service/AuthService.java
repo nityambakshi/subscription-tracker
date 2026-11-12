@@ -55,12 +55,7 @@ public class AuthService {
         String username = session.getUser().getUsername();
 
         String accessToken = jwtUtil.generateJwtToken(username, session.getId());
-        return AuthResponseDTO.builder()
-                .accessToken(accessToken)
-                .userId(session.getUser().getId())
-                .username(username)
-                .refreshToken(createdSession.rawRefreshToken())
-                .build();
+        return new AuthResponseDTO(accessToken, createdSession.rawRefreshToken(), username, session.getUser().getId());
     }
 
 }

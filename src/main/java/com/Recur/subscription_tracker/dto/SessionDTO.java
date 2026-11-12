@@ -1,0 +1,17 @@
+package com.Recur.subscription_tracker.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Data
+@AllArgsConstructor
+public class SessionDTO {
+    private UUID id;
+    private String deviceName;
+    private Instant createdAt;
+    private Instant lastUsedAt;
+}
+

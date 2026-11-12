@@ -9,4 +9,3 @@ public class RefreshRequestDTO {
     @NotBlank
     private String refreshToken;
 }
-

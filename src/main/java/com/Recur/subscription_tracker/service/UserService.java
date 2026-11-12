@@ -1,10 +1,5 @@
 package com.Recur.subscription_tracker.service;
 
-import com.Recur.subscription_tracker.exception.UserAlreadyExistsException;
-import com.Recur.subscription_tracker.model.User;
-import com.Recur.subscription_tracker.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,7 +7,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.Recur.subscription_tracker.configuration.AuthenticatedUserPrincipal;
+import com.Recur.subscription_tracker.exception.UserAlreadyExistsException;
+import com.Recur.subscription_tracker.model.User;
+import com.Recur.subscription_tracker.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -25,14 +25,14 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElseThrow(
-                () -> new UsernameNotFoundException("User not found with username: "+ username)
-        );
+                () -> new UsernameNotFoundException("User not found with username: " + username));
 
-        return toUserDetails(user);
+        return new AuthenticatedUserPrincipal(user);
     }
 
     public User getUserByUserName(String username) {
-        return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
     @Transactional
@@ -43,13 +43,5 @@ public class UserService implements UserDetailsService {
 
         User user = new User(username.trim().toLowerCase(), passwordEncoder.encode(rawPassword));
         return userRepository.save(user);
-    }
-
-    private UserDetails toUserDetails(User user) {
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPasswordHash())
-                .authorities(List.of(new SimpleGrantedAuthority(user.getRole().name())))
-                .build();
     }
 }

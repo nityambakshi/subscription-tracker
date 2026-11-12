@@ -1,22 +1,27 @@
 package com.Recur.subscription_tracker.service;
 
-import com.Recur.subscription_tracker.model.Session;
-import com.Recur.subscription_tracker.model.User;
-import com.Recur.subscription_tracker.repository.SessionRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.*;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-record CreatedSession(Session session, String rawRefreshToken) {}
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.Recur.subscription_tracker.dto.CreatedSession;
+import com.Recur.subscription_tracker.model.Session;
+import com.Recur.subscription_tracker.model.User;
+import com.Recur.subscription_tracker.repository.SessionRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +66,8 @@ public class SessionService {
 
         Optional<Session> found = sessionRepository.findByRefreshTokenHash(hash);
         if (found.isEmpty()) {
-            // Not current, but matches the previous token: someone is replaying a rotated token.
+            // Not current, but matches the previous token: someone is replaying a rotated
+            // token.
             sessionRepository.findByPreviousRefreshTokenHash(hash)
                     .ifPresent(reused -> revokeAll(reused.getUser()));
             throw new BadCredentialsException("Invalid refresh token");

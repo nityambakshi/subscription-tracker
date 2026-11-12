@@ -1,14 +1,17 @@
 package com.Recur.subscription_tracker.service;
 
-import com.Recur.subscription_tracker.dto.AuthRequestDTO;
-import com.Recur.subscription_tracker.dto.AuthResponseDTO;
-import com.Recur.subscription_tracker.model.Session;
-import com.Recur.subscription_tracker.model.User;
-import com.Recur.subscription_tracker.utils.JwtUtil;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
+
+import com.Recur.subscription_tracker.dto.AuthRequestDTO;
+import com.Recur.subscription_tracker.dto.AuthResponseDTO;
+import com.Recur.subscription_tracker.dto.CreatedSession;
+import com.Recur.subscription_tracker.model.Session;
+import com.Recur.subscription_tracker.model.User;
+import com.Recur.subscription_tracker.utils.JwtUtil;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -24,13 +27,12 @@ public class AuthService {
 
     public AuthResponseDTO login(AuthRequestDTO authRequestDTO, String deviceId) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequestDTO.getEmail(), authRequestDTO.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(authRequestDTO.getEmail(), authRequestDTO.getPassword()));
 
         return issueToken(userService.getUserByUserName(authRequestDTO.getEmail()), deviceId);
     }
 
-    public AuthResponseDTO register(AuthRequestDTO authRequestDTO,  String deviceId) {
+    public AuthResponseDTO register(AuthRequestDTO authRequestDTO, String deviceId) {
         userService.createUser(authRequestDTO.getEmail(), authRequestDTO.getPassword());
         return issueToken(userService.getUserByUserName(authRequestDTO.getEmail()), deviceId);
     }

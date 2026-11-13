@@ -1,6 +1,7 @@
 package com.Recur.subscription_tracker.filter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -39,14 +41,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String authToken = null;
+
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            authToken = authHeader.substring(BEARER_PREFIX.length());
+        } else if (request.getCookies() != null) {
+            authToken = Arrays.stream(request.getCookies())
+                    .filter(cookie -> "access_token".equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (authToken == null) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        final String authToken = authHeader.substring(BEARER_PREFIX.length());
 
         try {
             Claims claims = jwtUtil.parseClaims(authToken);

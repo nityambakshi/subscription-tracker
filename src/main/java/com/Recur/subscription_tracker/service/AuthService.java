@@ -1,5 +1,10 @@
 package com.Recur.subscription_tracker.service;
 
+import java.time.Duration;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -11,6 +16,7 @@ import com.Recur.subscription_tracker.model.Session;
 import com.Recur.subscription_tracker.model.User;
 import com.Recur.subscription_tracker.utils.JwtUtil;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +30,9 @@ public class AuthService {
     private final SessionService sessionService;
 
     private final JwtUtil jwtUtil;
+
+    @Value("${app.cookie.secure:false}")
+    private boolean cookieSecure;
 
     public AuthResponseDTO login(AuthRequestDTO authRequestDTO, String deviceId) {
         authenticationManager.authenticate(
@@ -58,6 +67,27 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateJwtToken(username, session.getId());
         return new AuthResponseDTO(accessToken, createdSession.rawRefreshToken(), username, session.getUser().getId());
+    }
+
+    public void setAuthCookie(HttpServletResponse response, AuthResponseDTO authResponseDTO) {
+        ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponseDTO.getAccessToken())
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofMinutes(15))
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponseDTO.getRefreshToken())
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/api/v1/auth")
+                .maxAge(Duration.ofDays(7))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 
 }

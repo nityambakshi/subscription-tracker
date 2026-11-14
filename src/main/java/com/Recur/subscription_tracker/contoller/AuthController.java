@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Recur.subscription_tracker.dto.AuthRequestDTO;
 import com.Recur.subscription_tracker.dto.AuthResponseDTO;
 import com.Recur.subscription_tracker.dto.RefreshRequestDTO;
+import com.Recur.subscription_tracker.model.User;
 import com.Recur.subscription_tracker.service.AuthService;
+import com.Recur.subscription_tracker.service.UserService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +31,17 @@ public class AuthController {
 
     private final AuthService authService;
 
+    private final UserService userService;
+
     @GetMapping("/me")
-    public ResponseEntity<Map<String, String>> me(Authentication authentication) {
+    public ResponseEntity<AuthResponseDTO> me(Authentication authentication) {
         if (authentication == null
                 || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(Map.of("username", authentication.getName()));
+        User user = userService.getUserByUserName(authentication.getName());
+        return ResponseEntity.ok(new AuthResponseDTO(user.getUsername(), user.getId(), user.getFullName()));
     }
 
     @PostMapping("/login")

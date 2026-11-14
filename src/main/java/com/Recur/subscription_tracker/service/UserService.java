@@ -43,7 +43,7 @@ public class UserService implements UserDetailsService {
             throw new UserAlreadyExistsException(normalizedUsername);
         }
 
-        User user = new User(fullName, normalizedUsername, passwordEncoder.encode(rawPassword));
+        User user = new User(fullName.trim(), normalizedUsername, passwordEncoder.encode(rawPassword));
         userRepository.save(user);
     }
 }

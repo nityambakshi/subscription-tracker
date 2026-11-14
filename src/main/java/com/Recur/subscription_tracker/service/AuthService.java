@@ -35,10 +35,12 @@ public class AuthService {
     private boolean cookieSecure;
 
     public AuthResponseDTO login(AuthRequestDTO authRequestDTO, String deviceId) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequestDTO.getEmail(), authRequestDTO.getPassword()));
+        String normalizedEmail = authRequestDTO.getEmail().trim().toLowerCase();
 
-        return issueToken(userService.getUserByUserName(authRequestDTO.getEmail()), deviceId);
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(normalizedEmail, authRequestDTO.getPassword()));
+
+        return issueToken(userService.getUserByUserName(normalizedEmail), deviceId);
     }
 
     public AuthResponseDTO register(AuthRequestDTO authRequestDTO, String deviceId) {
@@ -67,9 +69,7 @@ public class AuthService {
         Session session = createdSession.session();
         String username = session.getUser().getUsername();
 
-        String accessToken = jwtUtil.generateJwtToken(username, session.getId());
-        return new AuthResponseDTO(accessToken, createdSession.rawRefreshToken(), username, session.getUser().getId(),
-                session.getUser().getFullName());
+        return new AuthResponseDTO(username, session.getUser().getId(), session.getUser().getFullName());
     }
 
     public void setAuthCookie(HttpServletResponse response, AuthResponseDTO authResponseDTO) {

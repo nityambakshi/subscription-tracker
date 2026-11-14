@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,6 @@ import com.Recur.subscription_tracker.dto.RefreshRequestDTO;
 import com.Recur.subscription_tracker.service.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -65,8 +65,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequestDTO req) {
-        authService.logout(req.getRefreshToken());
+    public ResponseEntity<Void> logout(@CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response) {
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+        authService.clearAuthCookies(response);
         return ResponseEntity.noContent().build();
     }
 }

@@ -34,46 +34,45 @@ public class AuthService {
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
 
-    public AuthResponseDTO login(AuthRequestDTO authRequestDTO, String deviceId) {
+    public AuthResponseDTO login(AuthRequestDTO authRequestDTO, String deviceId, HttpServletResponse response) {
         String normalizedEmail = authRequestDTO.getEmail().trim().toLowerCase();
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(normalizedEmail, authRequestDTO.getPassword()));
 
-        return issueToken(userService.getUserByUserName(normalizedEmail), deviceId);
+        User user = userService.getUserByUserName(normalizedEmail);
+        return startSession(sessionService.create(user, deviceId), response);
     }
 
-    public AuthResponseDTO register(AuthRequestDTO authRequestDTO, String deviceId) {
+    public AuthResponseDTO register(AuthRequestDTO authRequestDTO, String deviceId, HttpServletResponse response) {
         String email = authRequestDTO.getEmail().trim().toLowerCase();
 
         userService.createUser(authRequestDTO.getFullName(), email, authRequestDTO.getPassword());
-        return issueToken(userService.getUserByUserName(email), deviceId);
+        User user = userService.getUserByUserName(email);
+
+        return startSession(sessionService.create(user, deviceId), response);
     }
 
-    public AuthResponseDTO refresh(String rawRefreshToken) {
-        CreatedSession next = sessionService.rotate(rawRefreshToken);
-        return getTokenFor(next);
+    public AuthResponseDTO refresh(String rawRefreshToken, HttpServletResponse response) {
+        return startSession(sessionService.rotate(rawRefreshToken), response);
     }
 
     public void logout(String rawRefreshToken) {
         sessionService.revoke(rawRefreshToken);
     }
 
-    private AuthResponseDTO issueToken(User user, String deviceId) {
-        CreatedSession createdSession = sessionService.create(user, deviceId);
+    private AuthResponseDTO startSession(CreatedSession created, HttpServletResponse response) {
+        Session session = created.session();
+        User user = session.getUser();
 
-        return getTokenFor(createdSession);
+        String accessToken = jwtUtil.generateJwtToken(user.getUsername(), session.getId());
+        setAuthCookie(response, accessToken, created.rawRefreshToken());
+
+        return new AuthResponseDTO(user.getUsername(), user.getId(), user.getFullName());
     }
 
-    private AuthResponseDTO getTokenFor(CreatedSession createdSession) {
-        Session session = createdSession.session();
-        String username = session.getUser().getUsername();
-
-        return new AuthResponseDTO(username, session.getUser().getId(), session.getUser().getFullName());
-    }
-
-    public void setAuthCookie(HttpServletResponse response, AuthResponseDTO authResponseDTO) {
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", authResponseDTO.getAccessToken())
+    private void setAuthCookie(HttpServletResponse response, String accessToken, String refreshToken) {
+        ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")
@@ -81,7 +80,7 @@ public class AuthService {
                 .maxAge(Duration.ofMinutes(15))
                 .build();
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", authResponseDTO.getRefreshToken())
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")

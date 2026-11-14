@@ -1,7 +1,5 @@
 package com.Recur.subscription_tracker.contoller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Recur.subscription_tracker.dto.AuthRequestDTO;
 import com.Recur.subscription_tracker.dto.AuthResponseDTO;
-import com.Recur.subscription_tracker.dto.RefreshRequestDTO;
 import com.Recur.subscription_tracker.model.User;
 import com.Recur.subscription_tracker.service.AuthService;
 import com.Recur.subscription_tracker.service.UserService;
@@ -49,9 +46,7 @@ public class AuthController {
             @RequestBody AuthRequestDTO authRequestDTO,
             @RequestHeader(value = "X-Device-Name", required = false) String device,
             HttpServletResponse response) {
-        AuthResponseDTO authResponseDTO = authService.login(authRequestDTO, device);
-        authService.setAuthCookie(response, authResponseDTO);
-        return ResponseEntity.ok(authResponseDTO);
+        return ResponseEntity.ok(authService.login(authRequestDTO, device, response));
     }
 
     @PostMapping("/signup")
@@ -59,14 +54,17 @@ public class AuthController {
             @RequestBody AuthRequestDTO authRequestDTO,
             @RequestHeader(value = "X-Device-Name", required = false) String device,
             HttpServletResponse response) {
-        AuthResponseDTO register = authService.register(authRequestDTO, device);
-        authService.setAuthCookie(response, register);
-        return ResponseEntity.ok(register);
+        return ResponseEntity.ok(authService.register(authRequestDTO, device, response));
     }
 
     @PostMapping("/refresh")
-    public AuthResponseDTO refreshToken(@RequestBody RefreshRequestDTO refreshRequestDTO) {
-        return authService.refresh(refreshRequestDTO.getRefreshToken());
+    public ResponseEntity<AuthResponseDTO> refreshToken(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response) {
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(authService.refresh(refreshToken, response));
     }
 
     @PostMapping("/logout")

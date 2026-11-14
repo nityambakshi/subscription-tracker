@@ -37,11 +37,13 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void createUser(String fullName, String username, String rawPassword) {
-        if (userRepository.existsByUsername(username)) {
-            throw new UserAlreadyExistsException(username);
+        String normalizedUsername = username.trim().toLowerCase();
+
+        if (userRepository.existsByUsername(normalizedUsername)) {
+            throw new UserAlreadyExistsException(normalizedUsername);
         }
 
-        User user = new User(fullName, username.trim().toLowerCase(), passwordEncoder.encode(rawPassword));
+        User user = new User(fullName, normalizedUsername, passwordEncoder.encode(rawPassword));
         userRepository.save(user);
     }
 }

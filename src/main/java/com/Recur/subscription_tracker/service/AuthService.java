@@ -42,8 +42,10 @@ public class AuthService {
     }
 
     public AuthResponseDTO register(AuthRequestDTO authRequestDTO, String deviceId) {
-        userService.createUser(authRequestDTO.getFullName(), authRequestDTO.getEmail(), authRequestDTO.getPassword());
-        return issueToken(userService.getUserByUserName(authRequestDTO.getEmail()), deviceId);
+        String email = authRequestDTO.getEmail().trim().toLowerCase();
+
+        userService.createUser(authRequestDTO.getFullName(), email, authRequestDTO.getPassword());
+        return issueToken(userService.getUserByUserName(email), deviceId);
     }
 
     public AuthResponseDTO refresh(String rawRefreshToken) {

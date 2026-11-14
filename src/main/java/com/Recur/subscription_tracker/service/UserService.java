@@ -36,12 +36,12 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public User createUser(String username, String rawPassword) {
+    public void createUser(String fullName, String username, String rawPassword) {
         if (userRepository.existsByUsername(username)) {
             throw new UserAlreadyExistsException(username);
         }
 
-        User user = new User(username.trim().toLowerCase(), passwordEncoder.encode(rawPassword));
-        return userRepository.save(user);
+        User user = new User(fullName, username.trim().toLowerCase(), passwordEncoder.encode(rawPassword));
+        userRepository.save(user);
     }
 }

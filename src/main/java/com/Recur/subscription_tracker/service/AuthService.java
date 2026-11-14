@@ -42,7 +42,7 @@ public class AuthService {
     }
 
     public AuthResponseDTO register(AuthRequestDTO authRequestDTO, String deviceId) {
-        userService.createUser(authRequestDTO.getEmail(), authRequestDTO.getPassword());
+        userService.createUser(authRequestDTO.getFullName(), authRequestDTO.getEmail(), authRequestDTO.getPassword());
         return issueToken(userService.getUserByUserName(authRequestDTO.getEmail()), deviceId);
     }
 

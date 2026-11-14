@@ -30,6 +30,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(length = 100)
+    private String fullName;
+
     @Column(unique = true, nullable = false, length = 20)
     private String username;
 
@@ -49,7 +52,8 @@ public class User {
     @Version
     private Long version;
 
-    public User(String username, String passwordHash) {
+    public User(String fullName, String username, String passwordHash) {
+        this.fullName = fullName;
         this.username = username;
         this.passwordHash = passwordHash;
     }

@@ -12,4 +12,5 @@ public class AuthResponseDTO {
     private String refreshToken;
     private String username;
     private UUID userId;
+    private String fullName;
 }

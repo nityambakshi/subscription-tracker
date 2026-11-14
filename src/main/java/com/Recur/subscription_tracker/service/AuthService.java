@@ -68,7 +68,8 @@ public class AuthService {
         String username = session.getUser().getUsername();
 
         String accessToken = jwtUtil.generateJwtToken(username, session.getId());
-        return new AuthResponseDTO(accessToken, createdSession.rawRefreshToken(), username, session.getUser().getId());
+        return new AuthResponseDTO(accessToken, createdSession.rawRefreshToken(), username, session.getUser().getId(),
+                session.getUser().getFullName());
     }
 
     public void setAuthCookie(HttpServletResponse response, AuthResponseDTO authResponseDTO) {

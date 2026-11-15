@@ -3,7 +3,10 @@ package com.Recur.subscription_tracker.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.Recur.subscription_tracker.dto.SubscriptionDTO;
 import com.Recur.subscription_tracker.model.Subscription;
@@ -48,5 +51,14 @@ public class SubscriptionService {
         return new SubscriptionDTO(subscription.getId(), subscription.getName(), subscription.getLogoKey(),
                 subscription.getCategory(), subscription.getAmount(), subscription.getCurrency(),
                 subscription.getCycle(), subscription.getRenewsOn(), subscription.isReminderOn());
+    }
+
+    @Transactional
+    public void updateReminder(UUID subscriptionId, UUID userId, boolean reminderOn) {
+        Subscription subscription = subscriptionRepository.findByIdAndUserId(subscriptionId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No subscription found with id: " + subscriptionId));
+
+        subscription.setReminderOn(reminderOn);
     }
 }

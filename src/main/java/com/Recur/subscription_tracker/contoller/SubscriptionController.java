@@ -1,11 +1,15 @@
 package com.Recur.subscription_tracker.contoller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,4 +41,10 @@ public class SubscriptionController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PatchMapping("/{id}/reminder")
+    public ResponseEntity<Void> updateReminder(@PathVariable UUID id, @RequestBody Map<String, Boolean> reminder,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user) {
+        subscriptionService.updateReminder(id, user.getUserId(), reminder.get("reminderOn"));
+        return ResponseEntity.noContent().build();
+    }
 }

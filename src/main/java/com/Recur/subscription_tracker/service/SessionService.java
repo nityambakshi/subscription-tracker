@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
@@ -27,9 +28,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SessionService {
 
+    private final SessionRepository sessionRepository;
+
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final SessionRepository sessionRepository;
+    private static final Duration REUSE_GRACE = Duration.ofSeconds(10);
 
     @Value("${jwt.refreshTokenExpirationTime}")
     private long refreshExpirationMs;
@@ -63,18 +66,15 @@ public class SessionService {
     @Transactional(noRollbackFor = BadCredentialsException.class)
     public CreatedSession rotate(String rawToken) {
         String hash = sha256(rawToken);
+        Instant now = Instant.now();
 
         Optional<Session> found = sessionRepository.findByRefreshTokenHash(hash);
         if (found.isEmpty()) {
-            // Not current, but matches the previous token: someone is replaying a rotated
-            // token.
-            sessionRepository.findByPreviousRefreshTokenHash(hash)
-                    .ifPresent(reused -> revokeAll(reused.getUser()));
+            handleStaleToken(hash, now);
             throw new BadCredentialsException("Invalid refresh token");
         }
 
         Session session = found.get();
-        Instant now = Instant.now();
 
         if (session.isRevoked() || session.getExpiresAt().isBefore(now)) {
             throw new BadCredentialsException("Session expired");
@@ -122,6 +122,17 @@ public class SessionService {
     @Transactional
     public void purgeExpired() {
         sessionRepository.deleteByExpiresAtBefore(Instant.now());
+    }
+
+    private void handleStaleToken(String hash, Instant now) {
+        sessionRepository.findByPreviousRefreshTokenHash(hash).ifPresent((reused) -> {
+            Instant rotatedAt = reused.getPreviousRotatedAt();
+            boolean withinGrace = rotatedAt != null && rotatedAt.plus(REUSE_GRACE).isAfter(now);
+
+            if (!withinGrace) {
+                revokeAll(reused.getUser());
+            }
+        });
     }
 
     private static String newRawToken() {

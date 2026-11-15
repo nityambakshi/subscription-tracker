@@ -82,6 +82,7 @@ public class SessionService {
 
         String newRaw = newRawToken();
         session.setPreviousRefreshTokenHash(session.getRefreshTokenHash());
+        session.setPreviousRotatedAt(now);
         session.setRefreshTokenHash(sha256(newRaw));
         session.setLastUsedAt(now);
         session.setExpiresAt(now.plusMillis(refreshExpirationMs)); // sliding window

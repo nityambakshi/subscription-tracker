@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.Recur.subscription_tracker.dto.SubscriptionDTO;
+import com.Recur.subscription_tracker.exception.ResourceNotFoundException;
 import com.Recur.subscription_tracker.model.Subscription;
 import com.Recur.subscription_tracker.model.User;
 import com.Recur.subscription_tracker.repository.SubscriptionRepository;
@@ -60,5 +61,13 @@ public class SubscriptionService {
                         "No subscription found with id: " + subscriptionId));
 
         subscription.setReminderOn(reminderOn);
+    }
+
+    @Transactional
+    public void deleteSubscription(UUID subscriptionId, UUID userId) {
+        Subscription subscription = subscriptionRepository.findByIdAndUserId(subscriptionId, userId).orElseThrow(
+                () -> new ResourceNotFoundException(
+                        "No subscription found for user: " + userId + " with subscription id: " + subscriptionId));
+        subscriptionRepository.delete(subscription);
     }
 }
